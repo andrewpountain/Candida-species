@@ -1,3 +1,47 @@
+"""
+Snakefile for running snakemake on Candida samples. Requires a config file in YAML format as follows:
+
+------------------
+%YAML 1.2
+---
+THREADS: <number of threads>
+
+TOOLS:
+    trimmomatic: java -jar /path/to/trimmomatic-0.39.jar
+    STAR: /path/to/STAR
+    samtools: /path/to/samtools
+    salmon: /path/to/salmon
+
+ARGS:
+    trimmomatic: ILLUMINACLIP:/path/to/trimmomatic/adapters/TruSeq3-PE.fa:2:30:10:2:TRUE LEADING:3 TRAILING:3 MINLEN:36
+    STAR: --readFilesCommand zcat --outSAMtype BAM SortedByCoordinate --outSAMunmapped Within --twopassMode Basic --outFilterMultimapNmax 20
+    salmon: -l ISR --gcBias --seqBias
+
+DIRS:
+    fastq: /path/to/raw/candida/fastq/directory
+    fastq_trim: /path/to/trimmed/candida/fastq/directory
+    bam: /path/to/candida/bam/directory
+    counts: /path/to/candida/salmon/outputs/directory
+
+SAMPLE_TABLE: /path/to/candida_sample_information.txt
+
+------------------
+
+The Candida sample information is a tab-separated table with the following fields:
+- sample_ID: unique sample ID
+- species: Candida species of origin
+- replicate: Replicate number
+- read1: path to read-1 raw fastq file
+- read2: path to read-2 raw fastq file
+- genome: path to STAR-indexed reference genome
+- gtf: path to annotation in GTF format
+- salmon: path to salmon-indexed reference transcriptome
+
+sample_ID	species	condition	replicate	read1	read2	genome	gtf	salmon
+
+
+"""
+
 import pandas as pd
 
 threads = config["THREADS"]
