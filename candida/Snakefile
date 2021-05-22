@@ -1,0 +1,79 @@
+import pandas as pd
+
+threads = config["THREADS"]
+sample_table = pd.read_table(config["SAMPLE_TABLE"]).set_index("sample_ID", drop=False)
+
+rule all:
+		input:
+				expand("{path}/{sample}_Aligned.sortedByCoord.out.bam.bai", path=config["DIRS"]["bam"], sample=sample_table["sample_ID"]),
+				expand("{path}/{sample}_Aligned.sortedByCoord.out.bam.flagstat", path=config["DIRS"]["bam"], sample=sample_table["sample_ID"]),
+				expand("{path}/{sample}/quant.sf", path=config["DIRS"]["counts"], sample=sample_table["sample_ID"])
+
+rule trim:
+		input:
+				lambda wildcards: sample_table.read1[wildcards.sample],
+				lambda wildcards: sample_table.read2[wildcards.sample]
+		output:
+				config["DIRS"]["fastq_trim"] + "/{sample}_1.trim.fq.gz",
+				temp(config["DIRS"]["fastq_trim"] + "/{sample}_1.unpaired.trim.fq.gz"),
+				config["DIRS"]["fastq_trim"] + "/{sample}_2.trim.fq.gz",
+				temp(config["DIRS"]["fastq_trim"] + "/{sample}_2.unpaired.trim.fq.gz")
+		params:
+				trimmomatic=config["TOOLS"]["trimmomatic"],
+				args=config["ARGS"]["trimmomatic"]
+		shell:
+				"{params.trimmomatic} PE -threads {threads} -phred33 {input} {output} {params.args}"
+
+rule star_map:
+		input:
+				fq1=config["DIRS"]["fastq_trim"] + "/{sample}_1.trim.fq.gz",
+				fq2=config["DIRS"]["fastq_trim"] + "/{sample}_2.trim.fq.gz"
+		output:
+				config["DIRS"]["bam"] + "/{sample}_Aligned.sortedByCoord.out.bam"
+		threads: threads
+		params:
+				idx=lambda wildcards: sample_table.genome[wildcards.sample],
+				outdir=config["DIRS"]["bam"] + "/{sample}_",
+				STAR=config["TOOLS"]["STAR"],
+				args=config["ARGS"]["STAR"]
+		log:
+				config["DIRS"]["bam"] + "/{sample}.canalnlog"
+		shell:
+				"{params.STAR} --genomeDir {params.idx} --readFilesIn {input.fq1} {input.fq2} "
+				"--runThreadN {threads} --outFileNamePrefix {params.outdir} {params.args}"
+
+rule genome_bam_index:
+		input:
+				config["DIRS"]["bam"] + "/{sample}_Aligned.sortedByCoord.out.bam"
+		output:
+				config["DIRS"]["bam"] + "/{sample}_Aligned.sortedByCoord.out.bam.bai"
+		params:
+				samtools=config["TOOLS"]["samtools"]
+		shell:
+				"{params.samtools} index {input}"
+
+rule genome_flagstat:
+		input:
+				config["DIRS"]["bam"] + "/{sample}_Aligned.sortedByCoord.out.bam"
+		output:
+				config["DIRS"]["bam"] + "/{sample}_Aligned.sortedByCoord.out.bam.flagstat"
+		params:
+				samtools=config["TOOLS"]["samtools"]
+		shell:
+				"{params.samtools} flagstat {input} > {output}"
+
+rule salmon:
+		input:
+				fq1=config["DIRS"]["fastq_trim"] + "/{sample}_1.trim.fq.gz",
+				fq2=config["DIRS"]["fastq_trim"] + "/{sample}_2.trim.fq.gz"
+		output:
+				config["DIRS"]["counts"] + "/{sample}/quant.sf"
+		threads: threads
+		params:
+				salmon=config["TOOLS"]["salmon"],
+				idx=lambda wildcards: sample_table.salmon[wildcards.sample],
+				out=config["DIRS"]["counts"] + "/{sample}",
+				args=config["ARGS"]["salmon"]
+		shell:
+				"{params.salmon} quant -p {threads} {params.args} -i {params.idx} "
+				"-1 {input.fq1} -2 {input.fq2} -o {params.out}"
