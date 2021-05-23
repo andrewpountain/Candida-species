@@ -22,7 +22,7 @@ dir <- "salmon_outputs"
 
 ### Getting fold changes for *C. albicans*
 
-I’m going to start with *Candida albicans* to show the full workflow
+I’m going to start with *Candida mealbicans* to show the full workflow
 and because it’s done slightly different from the others due to the
 SC5314 reference having a diploid genome.
 
