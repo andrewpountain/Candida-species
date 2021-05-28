@@ -53,15 +53,14 @@ write.table(combined.LFC.df[up_genes,grep("_l2fc|_padj", names(combined.LFC.df))
 
 # Plot fold changes
 colorset <- c("#333f48", "#00a9b7", "#9cadb7", "#579d42", "#a6cd57", "#ffd600")
-melt(up_FCs, id.vars="gene") %>%
+melt(up_FCs, id.vars="gene") %>% mutate(variable = gsub("_l2fc", "", variable)) %>%
   ggplot(aes(x=variable, y=value, fill=variable, group=variable)) +
     geom_violin() +
     scale_fill_manual(values=colorset) +
     geom_boxplot(outlier.color="NA",width=0.1, fill="white") +
     theme_classic() +
     theme(axis.title.x=element_blank(),
-          axis.text.x=element_blank(),
-          axis.text.y=element_text(size=12, color="black"),
+          axis.text=element_text(size=12, color="black"),
           axis.title.y=element_text(size=14),
           legend.position="none") +
     ylab(expression(paste(log[2], " fold change", sep=""))) +
@@ -113,7 +112,6 @@ plotCountsPub <- function(dds,gene,gene.name, transform=F) {
       scale_fill_manual(values=colorset)
   )
 }
-
 
 # Import information on samples
 sample.table <- read.table("candida_sample_information.txt",sep="\t",header=T)
