@@ -1,0 +1,140 @@
+"""
+Snakefile for running snakemake on Candida samples. Requires a config file in YAML format as follows:
+------------------
+%YAML 1.2
+---
+THREADS: <number of threads>
+
+TOOLS:
+    trimmomatic: java -jar /path/to/trimmomatic-0.39.jar
+    STAR: /path/to/STAR
+    samtools: /path/to/samtools
+    rsem: /path/to/RSEM/rsem-calculate-expression
+
+ARGS:
+    trimmomatic: ILLUMINACLIP:/path/to/trimmomatic/adapters/TruSeq3-PE.fa:2:30:10:2:TRUE LEADING:3 TRAILING:3 MINLEN:36
+    STAR: --readFilesCommand zcat --outSAMtype BAM SortedByCoordinate --outSAMunmapped Within --twopassMode Basic --outFilterMultimapNmax 20 --quantMode TranscriptomeSAM
+
+REFS:
+    STAR: /path/to/STAR/reference/index
+    rsem: /path/to/RSEM/reference/index
+
+DIRS:
+    fastq: /path/to/raw/fastq/directory
+    fastq_trim: /path/to/trimmed/fastq/directory
+    bam: /path/to/bam/file/directory
+    counts: /path/to/RSEM/output/directory
+
+SAMPLES:
+    - BMDM_1
+    - BMDM_2
+    - BMDM_3
+    - Calb_1
+    - Calb_2
+    - Calb_3
+    - Clus_1
+    - Clus_3
+    - Clus_5
+    - Cpara_1
+    - Cpara_2
+    - Cpara_4
+    - Ctrop_1
+    - Ctrop_3
+    - Ctrop_4
+    - LPS_1
+    - LPS_2
+    - LPS_3
+    - UV_1
+    - UV_2
+    - UV_3
+"""
+
+threads = config["THREADS"]
+
+rule all:
+        input:
+                expand("{param}/{sample}_Aligned.toTranscriptome.out.bam.flagstat", sample=config["SAMPLES"], param=config["DIRS"]["bam"]),
+                expand("{param}/{sample}_Aligned.sortedByCoord.out.bam.flagstat", sample=config["SAMPLES"], param=config["DIRS"]["bam"]),
+                expand("{param}/{sample}_Aligned.sortedByCoord.out.bam.bai", sample=config["SAMPLES"], param=config["DIRS"]["bam"]),
+                expand("{param}/{sample}.genes.results", sample=config["SAMPLES"], param=config["DIRS"]["counts"])
+
+rule trim:
+        input:
+                config["DIRS"]["fastq"] + "/{sample}_1.fastq.gz",
+                config["DIRS"]["fastq"] + "/{sample}_2.fastq.gz"
+        threads: threads
+        output:
+                config["DIRS"]["fastq_trim"] + "/{sample}_1.trim.fq.gz",
+                temp(config["DIRS"]["fastq_trim"] + "/{sample}_1.unpaired.trim.fq.gz"),
+                config["DIRS"]["fastq_trim"] + "/{sample}_2.trim.fq.gz",
+                temp(config["DIRS"]["fastq_trim"] + "/{sample}_2.unpaired.trim.fq.gz")
+        params:
+        		trimmomatic=config["TOOLS"]["trimmomatic"],
+        		args=config["ARGS"]["trimmomatic"]
+        shell:
+                "{params.trimmomatic} PE -threads {threads} -phred33 {input} {output} {params.args}"
+		
+rule star_map:
+	input:
+		fq1=config["DIRS"]["fastq_trim"] + "/{sample}_1.trim.fq.gz",
+		fq2=config["DIRS"]["fastq_trim"] + "/{sample}_2.trim.fq.gz"
+	output:
+		config["DIRS"]["bam"] + "/{sample}_Aligned.toTranscriptome.out.bam",
+		config["DIRS"]["bam"] + "/{sample}_Aligned.sortedByCoord.out.bam"
+	threads: threads
+	params:
+		idx=config["REFS"]["STAR"],
+		outdir=config["DIRS"]["bam"] + "/{sample}_",
+		STAR=config["TOOLS"]["STAR"],
+		args=config["ARGS"]["STAR"]
+	log:
+		config["DIRS"]["bam"] + "/{sample}.canalnlog"
+	shell:
+		"{params.STAR} --genomeDir {params.idx} --readFilesIn {input.fq1} {input.fq2} "
+		"--runThreadN {threads} --outFileNamePrefix {params.outdir} {params.args}"		
+
+rule genome_bam_index:
+	input:
+		config["DIRS"]["bam"] + "/{sample}_Aligned.sortedByCoord.out.bam"
+	output:
+		config["DIRS"]["bam"] + "/{sample}_Aligned.sortedByCoord.out.bam.bai"
+	params:
+		samtools=config["TOOLS"]["samtools"]
+	shell:
+		"{params.samtools} index {input}"
+
+rule transcript_flagstat:
+	input:
+		config["DIRS"]["bam"] + "/{sample}_Aligned.toTranscriptome.out.bam"
+	output:
+		config["DIRS"]["bam"] + "/{sample}_Aligned.toTranscriptome.out.bam.flagstat"
+	params:
+		samtools=config["TOOLS"]["samtools"]
+	shell:
+		"{params.samtools} flagstat {input} > {output}"
+
+rule genome_flagstat:
+	input:
+		config["DIRS"]["bam"] + "/{sample}_Aligned.sortedByCoord.out.bam"
+	output:
+		config["DIRS"]["bam"] + "/{sample}_Aligned.sortedByCoord.out.bam.flagstat"
+	params:
+		samtools=config["TOOLS"]["samtools"]
+	shell:
+		"{params.samtools} flagstat {input} > {output}"
+					
+rule rsem_calculate_expression:
+	input:
+		config["DIRS"]["bam"] + "/{sample}_Aligned.toTranscriptome.out.bam"
+	output:
+		config["DIRS"]["counts"] + "/{sample}.genes.results"
+	params:
+		rsem=config["TOOLS"]["rsem"],
+		idx=config["REFS"]["rsem"],
+		out=config["DIRS"]["counts"] + "/{sample}",
+		forward_prob="0"
+	log: config["DIRS"]["counts"] + "/{sample}.rsem.log"
+	threads: threads
+	shell:		
+		"{params.rsem} --bam --no-bam-output -p {threads} "
+		"--paired-end --forward-prob {params.forward_prob} {input} {params.idx} {params.out} &> {log}"
