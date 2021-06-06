@@ -1,0 +1,27 @@
+ID	Gene Name	Species
+ENSMUSG00000027358	bone morphogenetic protein 2(Bmp2)	Mus musculus	
+ENSMUSG00000040663	cardiotrophin-like cytokine factor 1(Clcf1)	Mus musculus	
+ENSMUSG00000035385	chemokine (C-C motif) ligand 2(Ccl2)	Mus musculus	
+ENSMUSG00000031779	chemokine (C-C motif) ligand 22(Ccl22)	Mus musculus	
+ENSMUSG00000004814	chemokine (C-C motif) ligand 24(Ccl24)	Mus musculus	
+ENSMUSG00000000982	chemokine (C-C motif) ligand 3(Ccl3)	Mus musculus	
+ENSMUSG00000018930	chemokine (C-C motif) ligand 4(Ccl4)	Mus musculus	
+ENSMUSG00000035373	chemokine (C-C motif) ligand 7(Ccl7)	Mus musculus	
+ENSMUSG00000029380	chemokine (C-X-C motif) ligand 1(Cxcl1)	Mus musculus	
+ENSMUSG00000058427	chemokine (C-X-C motif) ligand 2(Cxcl2)	Mus musculus	
+ENSMUSG00000029379	chemokine (C-X-C motif) ligand 3(Cxcl3)	Mus musculus	
+ENSMUSG00000014599	colony stimulating factor 1 (macrophage)(Csf1)	Mus musculus	
+ENSMUSG00000021367	endothelin 1(Edn1)	Mus musculus	
+ENSMUSG00000038508	growth differentiation factor 15(Gdf15)	Mus musculus	
+ENSMUSG00000027399	interleukin 1 alpha(Il1a)	Mus musculus	
+ENSMUSG00000027398	interleukin 1 beta(Il1b)	Mus musculus	
+ENSMUSG00000026981	interleukin 1 receptor antagonist(Il1rn)	Mus musculus	
+ENSMUSG00000016529	interleukin 10(Il10)	Mus musculus	
+ENSMUSG00000025746	interleukin 6(Il6)	Mus musculus	
+ENSMUSG00000034394	leukemia inhibitory factor(Lif)	Mus musculus	
+ENSMUSG00000058755	oncostatin M(Osm)	Mus musculus	
+ENSMUSG00000005824	tumor necrosis factor (ligand) superfamily, member 14(Tnfsf14)	Mus musculus	
+ENSMUSG00000066755	tumor necrosis factor (ligand) superfamily, member 18(Tnfsf18)	Mus musculus	
+ENSMUSG00000035678	tumor necrosis factor (ligand) superfamily, member 9(Tnfsf9)	Mus musculus	
+ENSMUSG00000024401	tumor necrosis factor(Tnf)	Mus musculus	
+ENSMUSG00000023951	vascular endothelial growth factor A(Vegfa)	Mus musculus	
